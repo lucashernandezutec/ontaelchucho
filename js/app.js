@@ -1,12 +1,13 @@
-const COL={rojo:'#A93A3A',azul:'#2F3FA8',marrón:'#A8742E'},HOME={x:180,y:210};
+const COL={rojo:'#A93A3A',azul:'#2F3FA8',marrón:'#A8742E',verde:'#2E7D4F',amarillo:'#D4A017',naranja:'#E36B2C',morado:'#7B4DAA',rosa:'#D65A8C',celeste:'#4A90C2',turquesa:'#1D9A91',negro:'#30343B',gris:'#7A8793'},HOME={x:180,y:210};
 const hora=()=>new Date().toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-const S={tab:'map',sel:0,radius:70,trail:false,report:false,reports:[],alerts:[],
+const S={tab:'map',sel:0,editing:null,radius:70,trail:false,report:false,reports:[],alerts:[],
 pets:[{name:'Thor',sp:'Perro',col:'rojo',code:'A1B2C3',x:150,y:190,bat:82,trail:[],out:false,lost:false},
 {name:'Mishi',sp:'Gato',col:'azul',code:'D4E5F6',x:215,y:240,bat:57,trail:[],out:false,lost:false},
 {name:'Luna',sp:'Perro',col:'marrón',code:'G7H8I9',x:190,y:172,bat:34,trail:[],out:false,lost:false}]};
 const dist=p=>Math.hypot(p.x-HOME.x,p.y-HOME.y);
 const alerta=t=>{S.alerts.unshift({t,h:hora()});if(S.tab==='alerts')render()};
 const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 function tick(){
  S.pets.forEach(p=>{
@@ -72,24 +73,63 @@ function render(){
   drawMap();
  }
  if(S.tab==='pets'){
-  v.innerHTML=S.pets.map((p,i)=>`<div class="card row"><span class="dot" style="background:${COL[p.col]};width:22px;height:22px"></span>
-  <div><h2>${p.name} <small style="font-weight:400;color:var(--mute)">${p.sp}</small></h2><p>Collar ${p.col} · código ${p.code}</p></div>
-  <div class="sp" style="text-align:right"><div class="bar" style="margin-left:auto"><i style="width:${p.bat}%;background:${p.bat<20?'var(--warn)':'var(--ok)'}"></i></div><small>${Math.round(p.bat)}%</small><br><button data-v="${i}" style="margin-top:6px;padding:5px 10px">Ver mapa</button></div></div>`).join('')||'<div class="card"><p>No hay collares vinculados.</p></div>';
+  v.innerHTML=S.pets.map((p,i)=>`<div class="card">
+  <div class="row"><span class="dot" style="background:${COL[p.col]};width:22px;height:22px"></span>
+  <div><h2>${esc(p.name)} <small style="font-weight:400;color:var(--mute)">${esc(p.sp)}</small></h2><p>Collar ${esc(p.col)} · código ${esc(p.code)}</p></div>
+  <div class="sp" style="text-align:right"><div class="bar" style="margin-left:auto"><i style="width:${p.bat}%;background:${p.bat<20?'var(--warn)':'var(--ok)'}"></i></div><small>${Math.round(p.bat)}%</small></div></div>
+  ${S.editing===i?`<form data-edit-form="${i}" novalidate>
+  <label for="edit-name-${i}">Nombre</label><input id="edit-name-${i}" name="name" value="${esc(p.name)}" autocomplete="off">
+  <label for="edit-type-${i}">Tipo</label><select id="edit-type-${i}" name="sp"><option${p.sp==='Perro'?' selected':''}>Perro</option><option${p.sp==='Gato'?' selected':''}>Gato</option></select>
+  <label for="edit-color-${i}">Color del collar</label><select id="edit-color-${i}" name="col">${Object.keys(COL).map(c=>`<option value="${c}"${p.col===c?' selected':''}>${c[0].toUpperCase()+c.slice(1)}</option>`).join('')}</select>
+  <label for="edit-code-${i}">Código del chip (6 caracteres)</label><input id="edit-code-${i}" name="code" value="${esc(p.code)}" maxlength="6" autocomplete="off">
+  <p data-edit-error style="color:var(--warn);min-height:20px"></p>
+  <div class="chips"><button class="on" type="submit">Guardar cambios</button><button type="button" data-cancel="${i}">Cancelar</button></div></form>`
+  :`<div class="chips"><button data-v="${i}">Ver mapa</button><button data-edit="${i}">Editar</button><button class="warn" data-delete="${i}">Borrar</button></div>`}</div>`).join('')||'<div class="card"><p>No hay collares vinculados.</p></div>';
   v.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{S.sel=+b.dataset.v;S.tab='map';render()});
+  v.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{S.editing=+b.dataset.edit;render()});
+  v.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=()=>{S.editing=null;render()});
+  v.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{
+   const i=+b.dataset.delete,p=S.pets[i];
+   if(!window.confirm(`¿Querés borrar el collar de ${p.name}?`))return;
+   S.pets.splice(i,1);
+   if(S.sel>i)S.sel--;
+   else if(S.sel===i)S.sel=Math.min(i,S.pets.length-1);
+   S.editing=null;
+   alerta(`Collar de ${p.name} borrado.`);
+   render();
+  });
+  v.querySelectorAll('[data-edit-form]').forEach(form=>form.onsubmit=e=>{
+   e.preventDefault();
+   const i=+form.dataset.editForm,p=S.pets[i];
+   const name=form.querySelector('[name="name"]').value.trim(),code=form.querySelector('[name="code"]').value.trim().toUpperCase();
+   const error=form.querySelector('[data-edit-error]');
+   if(!name){error.textContent='Escribí el nombre de tu mascota.';return}
+   if(!/^[A-Z0-9]{6}$/.test(code)){error.textContent='El código debe tener 6 letras o números.';return}
+   if(S.pets.some((pet,index)=>index!==i&&pet.code===code)){error.textContent='Ese chip ya está vinculado.';return}
+   p.name=name;p.sp=form.querySelector('[name="sp"]').value;p.col=form.querySelector('[name="col"]').value;p.code=code;
+   S.editing=null;
+   alerta(`Datos del collar de ${p.name} actualizados.`);
+   render();
+  });
  }
  if(S.tab==='alerts'){
   v.innerHTML=`<div class="card"><h2>Alertas</h2>${S.alerts.map(a=>`<div class="al">${a.t}<time>${a.h}</time></div>`).join('')||'<p>Sin alertas. Probá “Simular escape” en el mapa.</p>'}</div>`;
  }
  if(S.tab==='add'){
-  v.innerHTML=`<div class="card"><div class="row"><span class="chip"></span><div><h2>Vincular un collar nuevo</h2><p>Encendé el chip GPS y buscá el código en el estuche.</p></div></div>
-  <label>Color del collar</label><div class="sw" id="sw">${Object.keys(COL).map(c=>`<button data-c="${c}" style="background:${COL[c]}" class="${c==='rojo'?'on':''}">${c[0].toUpperCase()+c.slice(1)}</button>`).join('')}</div>
+  v.innerHTML=`<div class="card"><div class="row"><span class="chip" id="preview" style="--chip:${COL.rojo}"></span><div><h2>Vincular un collar nuevo</h2><p>Encendé el chip GPS y buscá el código en el estuche.</p></div></div>
+  <label>Color del collar</label><div class="sw" id="sw" role="group" aria-label="Elegí el color del collar">${Object.keys(COL).map(c=>`<button type="button" data-c="${c}" style="--swatch:${COL[c]}" class="${c==='rojo'?'on':''}" aria-label="${c[0].toUpperCase()+c.slice(1)}" aria-pressed="${c==='rojo'}" title="${c[0].toUpperCase()+c.slice(1)}"></button>`).join('')}</div><p>Color seleccionado: <span id="colorName">Rojo</span></p>
   <label for="nm">Nombre de la mascota</label><input id="nm" placeholder="Ej.: Rocky" autocomplete="off">
   <label for="sp">Tipo</label><select id="sp"><option>Perro</option><option>Gato</option></select>
   <label for="cd">Código del chip (6 caracteres)</label><input id="cd" maxlength="6" placeholder="A1B2C3" autocomplete="off">
   <p id="err" style="color:var(--warn);min-height:20px"></p>
   <button id="go" class="on" style="width:100%">Vincular collar</button></div>`;
   let col='rojo';
-  document.querySelectorAll('#sw button').forEach(b=>b.onclick=()=>{col=b.dataset.c;document.querySelectorAll('#sw button').forEach(x=>x.classList.toggle('on',x===b))});
+  document.querySelectorAll('#sw button').forEach(b=>b.onclick=()=>{
+   col=b.dataset.c;
+   document.querySelectorAll('#sw button').forEach(x=>{const selected=x===b;x.classList.toggle('on',selected);x.setAttribute('aria-pressed',selected)});
+   $('#preview').style.setProperty('--chip',COL[col]);
+   $('#colorName').textContent=col[0].toUpperCase()+col.slice(1);
+  });
   $('#go').onclick=()=>{
    const n=$('#nm').value.trim(),c=$('#cd').value.trim().toUpperCase();
    if(!n)return $('#err').textContent='Escribí el nombre de tu mascota.';

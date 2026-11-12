@@ -25,8 +25,8 @@ input[type=range]{padding:0}
 nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:440px;display:flex;background:var(--surf);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
 nav button{flex:1;border:0;border-radius:0;padding:14px 4px;background:none;color:var(--mute);font-size:13px}
 nav button.on{color:var(--ink);box-shadow:inset 0 3px 0 var(--ink);background:none}
-.sw{display:flex;gap:10px}.sw button{flex:1;height:44px;border:3px solid transparent;color:#fff}
-.sw button.on{border-color:var(--ink)}
+.sw{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:8px}.sw button{width:42px;height:42px;padding:0;justify-self:center;border:3px solid transparent;border-radius:50%;background:var(--swatch);color:var(--ink)}
+.sw button.on{border-color:var(--ink);box-shadow:inset 0 0 0 3px var(--surf)}
 .al{padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}.al:last-child{border:0}.al time{color:var(--mute);font-size:12px;display:block}
-.chip{display:inline-block;width:34px;height:34px;border-radius:6px;background:linear-gradient(135deg,#DADADA,var(--chip));border:2px solid var(--ink);vertical-align:middle}
+.chip{display:inline-block;width:34px;height:34px;border-radius:50%;background:var(--chip);border:2px solid var(--ink);vertical-align:middle;flex:none}
 h2{font-size:16px;margin:0 0 4px}p{margin:4px 0;color:var(--mute);font-size:14px}
