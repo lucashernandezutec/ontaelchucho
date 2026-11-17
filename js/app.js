@@ -1,5 +1,5 @@
 const COL={rojo:'#A93A3A',azul:'#2F3FA8',marrón:'#A8742E',verde:'#2E7D4F',amarillo:'#D4A017',naranja:'#E36B2C',morado:'#7B4DAA',rosa:'#D65A8C',celeste:'#4A90C2',turquesa:'#1D9A91',negro:'#30343B',gris:'#7A8793'},HOME={x:180,y:210};
-const ZONAS={centro:{nombre:'Centro'},estacion:{nombre:'Estación'},olimpico:{nombre:'Barrio Olímpico'}};
+const ZONAS={centro:{nombre:'Centro'},estacion:{nombre:'Cumbres del Alma'},olimpico:{nombre:'Barrio Olímpico'}};
 const hora=()=>new Date().toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 const S={tab:'map',sel:0,editing:null,showAddCollar:false,radius:70,trail:false,report:false,reports:[],alerts:[],dataZone:'centro',dataSamples:[],dataTicks:0,user:{name:'Usuario de prueba',email:'usuario@ontaelchucho.demo'},
 pets:[{name:'Thor',sp:'Perro',col:'rojo',code:'A1B2C3',x:150,y:190,bat:82,trail:[],out:false,lost:false},
