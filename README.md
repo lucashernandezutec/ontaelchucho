@@ -7,8 +7,10 @@ Prototipo web (HTML + CSS + JavaScript, sin dependencias) de la app que se vincu
 - Zona segura con radio ajustable y alertas de salida/regreso
 - Modo perdido y recorrido reciente
 - Reporte vecinal de perros sueltos
-- Vincular collares con código de chip
+- Vincular collares con código de chip desde la pestaña Collares
 - Historial de alertas
+- Simulación de animales detectados por zona según la cantidad de collares vinculados
+- Perfil de usuario de demostración con sus mascotas y collares asociados
 
 > Las posiciones son **simuladas** en `js/app.js` (función `tick`). Para usar collares reales hay que conectar un backend.
 
